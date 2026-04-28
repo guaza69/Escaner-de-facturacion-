@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FactuFlow — Escáner de Facturas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:      #0f172a;
+            --card:    #1e293b;
+            --border:  rgba(255,255,255,0.08);
+            --text:    #f8fafc;
+            --dim:     #94a3b8;
+            --primary: #6366f1;
+            --accent:  #22d3ee;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger:  #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image:
+                radial-gradient(ellipse at 15% 40%, rgba(99,102,241,0.12) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 15%, rgba(34,211,238,0.08) 0%, transparent 50%);
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(13,21,38,0.8);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .topbar-logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .topbar-user { color: var(--dim); font-size: 0.85rem; }
+        .topbar-user span { color: var(--text); font-weight: 600; }
+        .btn-nav {
+            padding: 0.45rem 1rem;
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: #a5b4fc;
+            border-radius: 0.6rem;
+            font-size: 0.82rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-nav:hover { background: rgba(99,102,241,0.3); }
+
+        /* ── CONTENIDO ── */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.5rem;
+            gap: 1.5rem;
+        }
+
+        /* ── STATS DEL DÍA ── */
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            max-width: 600px;
+        }
+        .stat-pill {
+            flex: 1;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            text-align: center;
+        }
+        .stat-pill .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim); margin-bottom: 0.25rem; }
+        .stat-pill .value { font-size: 1.6rem; font-weight: 700; }
+        .stat-pill .value.money { font-size: 1.2rem; }
+        .stat-pill.blue  .value { color: #818cf8; }
+        .stat-pill.green .value { color: #34d399; }
+
+        /* ── SCANNER CARD ── */
+        .scanner-card {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .scanner-label {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .scanner-label h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
+        .scanner-label p  { font-size: 0.85rem; color: var(--dim); }
+
+        .input-wrap { position: relative; }
+        .scan-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.3rem;
+            opacity: 0.4;
+        }
+        #scanner {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid var(--border);
+            border-radius: 0.875rem;
+            padding: 1rem 1rem 1rem 3rem;
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+            caret-color: var(--accent);
+        }
+        #scanner::placeholder { color: var(--dim); }
+        #scanner:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+        }
+        #scanner.ok    { border-color: var(--success); box-shadow: 0 0 0 4px rgba(16,185,129,0.15); }
+        #scanner.dup   { border-color: var(--warning); box-shadow: 0 0 0 4px rgba(245,158,11,0.15); }
+        #scanner.error { border-color: var(--danger);  box-shadow: 0 0 0 4px rgba(239,68,68,0.15); }
+
+        /* ── FEEDBACK ── */
+        .feedback {
+            margin-top: 1rem;
+            padding: 0.875rem 1.1rem;
+            border-radius: 0.875rem;
+            font-size: 0.9rem;
+            display: none;
+            align-items: center;
+            gap: 0.6rem;
+            animation: slideDown 0.25s ease;
+        }
+        .feedback.ok    { background: rgba(16,185,129,0.12);  border: 1px solid rgba(16,185,129,0.25);  color: #6ee7b7; display: flex; }
+        .feedback.dup   { background: rgba(245,158,11,0.12);  border: 1px solid rgba(245,158,11,0.25);  color: #fcd34d; display: flex; }
+        .feedback.error { background: rgba(239,68,68,0.12);   border: 1px solid rgba(239,68,68,0.25);   color: #fca5a5; display: flex; }
+        .feedback-icon { font-size: 1.1rem; flex-shrink: 0; }
+        .feedback-text strong { display: block; font-weight: 600; font-size: 0.85rem; }
+        .feedback-text small  { opacity: 0.8; font-size: 0.78rem; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── ÚLTIMA FACTURA ── */
+        .last-scan {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 1.25rem;
+            padding: 1.1rem 1.5rem;
+            display: none;
+        }
+        .last-scan-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim); margin-bottom: 0.75rem; }
+        .last-scan-grid  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
+        .last-field label { font-size: 0.7rem; color: var(--dim); display: block; margin-bottom: 0.15rem; }
+        .last-field span  { font-size: 0.95rem; font-weight: 600; }
+        .last-field .val  { color: #34d399; }
+
+        /* ── PULSE ── */
+        .pulse-dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 0 0 rgba(16,185,129,0.6);
+            animation: pulse 2s infinite;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.6); }
+            70%  { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+        }
+
+        /* ── PIE ── */
+        footer {
+            text-align: center;
+            padding: 1rem;
+            color: var(--dim);
+            font-size: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 500px) {
+            .stats-row { flex-direction: column; }
+            .last-scan-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <div class="topbar-logo">FactuFlow</div>
+        <div class="topbar-right">
+            <span class="topbar-user">Hola, <span id="nombreUser">—</span></span>
+            <a class="btn-nav" href="dashboard.html">📊 Dashboard</a>
+        </div>
+    </header>
+
+    <!-- CONTENIDO -->
+    <div class="content">
+
+        <!-- STATS DEL DÍA -->
+        <div class="stats-row">
+            <div class="stat-pill blue">
+                <div class="label">Facturas hoy</div>
+                <div class="value" id="statFacturas">—</div>
+            </div>
+            <div class="stat-pill green">
+                <div class="label">Total acumulado hoy</div>
+                <div class="value money" id="statTotal">—</div>
+            </div>
+        </div>
+
+        <!-- SCANNER -->
+        <div class="scanner-card">
+            <div class="scanner-label">
+                <h2><span class="pulse-dot"></span>Listo para escanear</h2>
+                <div id="planillaActivaInfo" style="margin-bottom: 1rem; padding: 0.5rem; background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.2); border-radius: 0.75rem; display: none;">
+                    <small style="color:var(--dim); text-transform: uppercase; font-size: 0.65rem;">Planilla Activa</small>
+                    <div style="font-weight: 700; color: var(--accent); font-size: 1.1rem;" id="activePlanillaNum">None</div>
+                    <div id="planillaCounter" style="font-size: 0.9rem; margin-top: 0.25rem; font-weight: 600;">
+                        Progreso: <span id="pCount">0</span> / <span id="pTotal">0</span>
+                    </div>
+                    <button class="btn-nav" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; margin-top: 0.3rem;" onclick="cambiarPlanilla()">Cambiar</button>
+                </div>
+                <div id="noPlanillaWarn" style="margin-bottom: 1rem; padding: 0.5rem; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); border-radius: 0.75rem;">
+                    <p style="color:var(--warning); font-size: 0.85rem;">⚠️ No has seleccionado una planilla</p>
+                    <button class="btn-nav" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; margin-top: 0.3rem;" onclick="cambiarPlanilla()">Seleccionar Planilla</button>
+                </div>
+                <p>Apunte el lector de QR al código de la factura</p>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <input type="text" id="novedadInput" placeholder="Novedad (ej: Pago parcial, revisar...)" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 0.75rem; padding: 0.5rem; color: var(--text); outline: none; font-size: 0.85rem;">
+            </div>
+
+            <div class="input-wrap">
+                <span class="scan-icon">▦</span>
+                <input
+                    type="text"
+                    id="scanner"
+                    placeholder="Seleccione una planilla para comenzar..."
+                    autocomplete="off"
+                    disabled
+                />
+            </div>
+
+            <div id="sessionCounter" style="margin-top: 1rem; text-align: center; color: var(--dim); font-size: 0.85rem; display: none;">
+                Escaneadas en esta sesión: <strong id="sessionCount" style="color: var(--accent)">0</strong>
+            </div>
+
+            <!-- FEEDBACK -->
+            <div class="feedback" id="feedback">
+                <span class="feedback-icon" id="feedbackIcon"></span>
+                <div class="feedback-text">
+                    <strong id="feedbackTitle"></strong>
+                    <small id="feedbackSub"></small>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÚLTIMA FACTURA -->
+        <div class="last-scan" id="lastScan">
+            <div class="last-scan-title">Última factura registrada</div>
+            <div class="last-scan-grid">
+                <div class="last-field">
+                    <label>ID</label>
+                    <span id="lastId">—</span>
+                </div>
+                <div class="last-field">
+                    <label>Fecha</label>
+                    <span id="lastFecha">—</span>
+                </div>
+                <div class="last-field">
+                    <label>Valor</label>
+                    <span class="val" id="lastValor">—</span>
+                </div>
+            </div>
+            
+            <!-- SECCIÓN CARGA DE SOPORTE -->
+            <div id="uploadSection" style="display:none; margin-top: 1.25rem; padding: 1rem; background: rgba(99,102,241,0.05); border: 1px dashed rgba(99,102,241,0.3); border-radius: 1rem; text-align: center;">
+                <p style="font-size: 0.75rem; margin-bottom: 0.6rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.05em;">Evidencia Digital (Opcional)</p>
+                <label class="btn-nav" style="cursor: pointer; display: inline-block; font-size: 0.75rem;">
+                    📷 Subir Imagen o PDF
+                    <input type="file" id="fileSoporte" accept="image/*,application/pdf" style="display: none;" onchange="subirSoporte()">
+                </label>
+                <div id="uploadStatus" style="font-size: 0.72rem; margin-top: 0.5rem; font-weight: 600;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>FactuFlow &nbsp;·&nbsp; Sistema de Control de Facturación</footer>
+
+    <!-- SCRIPTS -->
+    <script src="js/parser.js"></script>
+    <script>
+        // ── Auth ──────────────────────────────────────────────────────────────
+        fetch('../api/session_check.php')
+            .then(r => r.json())
+            .then(d => {
+                if (!d.ok) { window.location.href = 'login.html'; return; }
+                document.getElementById('nombreUser').textContent = d.nombre;
+            })
+            .catch(() => window.location.href = 'login.html');
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+        const cop = v => '$ ' + parseFloat(v || 0).toLocaleString('es-CO', { minimumFractionDigits: 0 });
+
+        let facturasDia    = 0;
+        let recaudoDia     = 0;
+        const input        = document.getElementById('scanner');
+        const feedbackEl   = document.getElementById('feedback');
+        const feedbackIcon = document.getElementById('feedbackIcon');
+        const feedbackTitle= document.getElementById('feedbackTitle');
+        const feedbackSub  = document.getElementById('feedbackSub');
+        let feedbackTimer  = null;
+        let sessionCount   = 0;
+
+        let activePlanillaId = localStorage.getItem('planilla_activa');
+        let activePlanillaNum = localStorage.getItem('active_planilla_num');
+        let activePlanillaTotal = parseInt(localStorage.getItem('active_planilla_total') || 0);
+        let currentPlanillaCount = 0;
+
+        async function actualizarPlanillaUI() {
+            const scanInput = document.getElementById('scanner');
+            if (activePlanillaId) {
+                document.getElementById('planillaActivaInfo').style.display = 'block';
+                document.getElementById('noPlanillaWarn').style.display = 'none';
+                document.getElementById('activePlanillaNum').textContent = activePlanillaNum;
+                document.getElementById('pTotal').textContent = activePlanillaTotal;
+                
+                // Fetch current count and info for this planilla
+                try {
+                    const res = await fetch(`../api/get_planilla_detalle.php?id=${activePlanillaId}`);
+                    const data = await res.json();
+                    if (data.ok) {
+                        const p = data.planilla;
+                        activePlanillaNum = p.numero;
+                        activePlanillaTotal = p.total_esperado;
+                        currentPlanillaCount = p.total_registrado || 0;
+                        
+                        document.getElementById('activePlanillaNum').textContent = activePlanillaNum;
+                        document.getElementById('pTotal').textContent = activePlanillaTotal;
+                        
+                        actualizarContadorColor();
+                        
+                        if (p.closed_at) {
+                            scanInput.disabled = true;
+                            scanInput.placeholder = "🔒 PLANILLA CERRADA";
+                            document.getElementById('planillaActivaInfo').style.background = 'rgba(99,102,241,0.2)';
+                            document.getElementById('planillaActivaInfo').style.borderColor = 'var(--primary)';
+                            document.getElementById('planillaCounter').innerHTML += '<div style="color:var(--primary); margin-top:0.5rem; font-weight:700;">REGISTRO CERRADO</div>';
+                        } else {
+                            scanInput.disabled = false;
+                            scanInput.placeholder = "Listo para escanear...";
+                            scanInput.focus();
+                        }
+                    }
+                } catch(e) { console.error("Error fetching planilla count", e); }
+
+                document.getElementById('sessionCounter').style.display = 'block';
+            } else {
+                document.getElementById('planillaActivaInfo').style.display = 'none';
+                document.getElementById('noPlanillaWarn').style.display = 'block';
+                scanInput.disabled = true;
+                scanInput.placeholder = "⚠️ Seleccione una planilla primero";
+            }
+        }
+
+        function actualizarContadorColor() {
+            const countEl = document.getElementById('pCount');
+            countEl.textContent = currentPlanillaCount;
+            if (currentPlanillaCount >= activePlanillaTotal) {
+                countEl.style.color = 'var(--success)';
+            } else {
+                countEl.style.color = 'var(--danger)';
+            }
+        }
+
+        function cambiarPlanilla() {
+            window.location.href = 'dashboard.html'; // El usuario elige la planilla desde el dashboard
+        }
+
+        // ── Stats del día ─────────────────────────────────────────────────────
+        async function cargarStats() {
+            const hoy = new Date().toISOString().split('T')[0];
+            try {
+                const res  = await fetch(`../api/resumen.php?fecha=${hoy}`);
+                const data = await res.json();
+                if (!data.ok) return;
+                facturasDia = data.facturas_dia || 0;
+                recaudoDia  = data.recaudo_dia  || 0;
+                document.getElementById('statFacturas').textContent = facturasDia.toLocaleString();
+                document.getElementById('statTotal').textContent    = cop(recaudoDia);
+            } catch (e) {
+                console.warn('Stats no disponibles:', e);
+            }
+        }
+
+        // ── Mostrar feedback ──────────────────────────────────────────────────
+        function mostrarFeedback(tipo, titulo, sub) {
+            // tipos: ok | dup | error
+            input.className = tipo;
+            feedbackEl.className = `feedback ${tipo}`;
+            const icons = { ok: '✅', dup: '⚠️', error: '❌' };
+            feedbackIcon.textContent  = icons[tipo] || 'ℹ️';
+            feedbackTitle.textContent = titulo;
+            feedbackSub.textContent   = sub;
+
+            clearTimeout(feedbackTimer);
+            feedbackTimer = setTimeout(() => {
+                input.className = '';
+                feedbackEl.style.display = 'none';
+            }, 4000);
+        }
+
+        // ── Actualizar última factura ─────────────────────────────────────────
+        let lastFacturaId = null; // Para vincular el soporte
+
+        function mostrarUltimaFactura(f) {
+            lastFacturaId = f.id;
+            document.getElementById('lastScan').style.display = 'block';
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('uploadStatus').textContent = '';
+            document.getElementById('fileSoporte').value = '';
+            
+            document.getElementById('lastId').textContent    = f.id;
+            document.getElementById('lastFecha').textContent = f.fecha || new Date().toLocaleDateString('es-CO');
+            document.getElementById('lastValor').textContent = cop(f.valor);
+        }
+
+        async function subirSoporte() {
+            const fileInput = document.getElementById('fileSoporte');
+            const status = document.getElementById('uploadStatus');
+            
+            if (!fileInput.files.length) return;
+            
+            const formData = new FormData();
+            formData.append('archivo', fileInput.files[0]);
+            formData.append('factura_id', lastFacturaId);
+            
+            status.textContent = '⏳ Subiendo...';
+            status.style.color = 'var(--dim)';
+            
+            try {
+                const res = await fetch('../api/upload_factura.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+                
+                if (result.ok) {
+                    status.textContent = '✔ Soporte subido correctamente';
+                    status.style.color = 'var(--success)';
+                } else {
+                    status.textContent = '❌ ' + (result.error || 'Error al subir');
+                    status.style.color = 'var(--danger)';
+                }
+            } catch (err) {
+                status.textContent = '❌ Error de conexión';
+                status.style.color = 'var(--danger)';
+            }
+        }
+
+        // ── Evento de escaneo ─────────────────────────────────────────────────
+        input.addEventListener('change', async (e) => {
+            const texto = e.target.value.trim();
+            if (!texto) return;
+
+            let factura;
+            try {
+                factura = parseQR(texto);
+            } catch {
+                mostrarFeedback('error', 'QR no reconocido', 'El texto no corresponde a una factura válida');
+                input.value = '';
+                input.focus();
+                return;
+            }
+
+            if (!factura || !factura.id) {
+                mostrarFeedback('error', 'QR incompleto', 'No se pudo extraer el número de factura');
+                input.value = '';
+                input.focus();
+                return;
+            }
+
+            try {
+                const novedad = document.getElementById('novedadInput').value;
+                const res    = await fetch('../api/guardar_factura.php', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        ...factura,
+                        planilla_id: activePlanillaId,
+                        novedad: novedad
+                    })
+                });
+                const result = await res.json();
+
+                if (result.ok) {
+                    // Éxito
+                    sessionCount++;
+                    document.getElementById('sessionCount').textContent = sessionCount;
+                    
+                    currentPlanillaCount++;
+                    actualizarContadorColor();
+                    
+                    facturasDia++;
+                    recaudoDia += parseFloat(factura.valor || 0);
+                    document.getElementById('statFacturas').textContent = facturasDia.toLocaleString();
+                    document.getElementById('statTotal').textContent    = cop(recaudoDia);
+                    mostrarFeedback('ok', `Registrada #${sessionCount}`, `${factura.id} — ${cop(factura.valor)}`);
+                    mostrarUltimaFactura(factura);
+                    document.getElementById('novedadInput').value = ''; 
+
+                } else if (result.error === 'DUPLICADO') {
+                    const msg = result.mensaje || `El ID ${factura.id} ya existe en el sistema`;
+                    mostrarFeedback('dup', `⚠️ DUPLICADO`, msg);
+                    alert(`¡ALERTA DE DUPLICADO!\n${msg}`);
+
+                } else if (result.error === 'PLANILLA_CERRADA') {
+                    mostrarFeedback('error', 'Planilla Cerrada', 'No se pueden agregar más facturas a esta planilla');
+                    actualizarPlanillaUI(); // Bloquear input
+
+                } else {
+                    mostrarFeedback('error', 'Error al guardar', result.error || 'Intente de nuevo');
+                }
+
+            } catch (err) {
+                console.error('Red:', err);
+                mostrarFeedback('error', 'Sin conexión con el servidor', 'Verifique que el servidor esté activo');
+            }
+
+            input.value = '';
+            input.focus();
+        });
+
+        // Mantener foco en el input siempre
+        document.addEventListener('click', () => input.focus());
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement !== input && e.key !== 'Tab') input.focus();
+        });
+
+        // ── Inicialización ────────────────────────────────────────────────────
+        actualizarPlanillaUI();
+        cargarStats();
+        setInterval(cargarStats, 30000); // Refresh stats cada 30s
+        input.focus();
+    </script>
+</body>
+</html>

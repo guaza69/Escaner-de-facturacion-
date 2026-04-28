@@ -1,0 +1,10 @@
+# FactuFlow GitIgnore
+uploads/*
+!uploads/.gitkeep
+api/reset_db.php
+api/migrate_soporte.php
+api/migrate_planillas.php
+database_clean.sql
+.DS_Store
+node_modules/
+.env

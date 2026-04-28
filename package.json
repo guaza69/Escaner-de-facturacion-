@@ -1,0 +1,14 @@
+{
+  "name": "factuflow",
+  "version": "1.0.0",
+  "description": "Sistema de Control de Facturación",
+  "main": "index.php",
+  "scripts": {
+    "start": "php -S localhost:8000",
+    "start:all": "php -S localhost:8000",
+    "setup": "php api/setup.php",
+    "browse": "start http://localhost:8000/public/index.html"
+  },
+  "author": "",
+  "license": "ISC"
+}
