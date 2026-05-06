@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FactuFlow — Dashboard</title>
+    <title>Soluciones Mana — Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -11,9 +11,34 @@
             --border: rgba(255,255,255,0.08); --text: #f8fafc; --dim: #94a3b8;
             --primary: #6366f1; --accent: #22d3ee;
             --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --modal-bg: rgba(15,23,42,0.9);
+            --thead-bg: rgba(0,0,0,0.4);
+            --filter-bg: rgba(0,0,0,0.15);
+            --visor-bg:  rgba(15,23,42,0.85);
+            --input-bg:  rgba(0,0,0,0.2);
+        }
+
+        [data-theme="light"] {
+            --bg:      #f1f5f9;
+            --sidebar: #e2e8f0;
+            --card:    #ffffff;
+            --border:  rgba(0,0,0,0.12);
+            --text:    #0f172a;
+            --dim:     #475569;
+            --primary: #4f46e5;
+            --accent:  #0891b2;
+            --success: #059669;
+            --warning: #d97706;
+            --danger:  #dc2626;
+            --modal-bg: rgba(15,23,42,0.7);
+            --thead-bg: rgba(0,0,0,0.05);
+            --filter-bg: rgba(0,0,0,0.03);
+            --visor-bg:  rgba(30,41,59,0.8);
+            --input-bg:  #f8fafc;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
         body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
 
         /* ─── SIDEBAR ────────────────────────────────────────────────── */
         .sidebar {
@@ -61,12 +86,14 @@
         .p-stat span { font-weight: 600; font-size: 1rem; }
         .counter-bad { color: var(--danger) !important; font-weight: 700 !important; }
         .counter-ok  { color: var(--success) !important; font-weight: 700 !important; }
-        .p-closed { opacity: 0.7; border-style: dashed !important; background: rgba(13,21,38,0.4) !important; }
-        .planilla-actions { display: flex; gap: 0.5rem; margin-top: 1.25rem; }
+        .p-closed { opacity: 0.7; border-style: dashed !important; background: rgba(13,21,38,0.4) !important; border-color: var(--dim) !important; }
+        .p-complete { border-color: var(--success); }
+        .p-incomplete { border-color: var(--danger); }
+        .planilla-actions { display: flex; gap: 0.5rem; margin-top: 1.25rem; flex-wrap: wrap; }
         
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15,23,42,0.9); backdrop-filter: blur(8px);
+            background: var(--modal-bg); backdrop-filter: blur(8px);
             display: none; align-items: center; justify-content: center; z-index: 100;
         }
         .modal-content {
@@ -77,7 +104,7 @@
         .form-group { margin-bottom: 1.25rem; }
         .form-group label { display: block; font-size: 0.85rem; color: var(--dim); margin-bottom: 0.5rem; }
         .form-group input, .form-group textarea {
-            width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+            width: 100%; background: var(--input-bg); border: 1px solid var(--border);
             border-radius: 0.75rem; padding: 0.75rem; color: var(--text); outline: none;
         }
         .form-group input:focus { border-color: var(--primary); }
@@ -154,12 +181,14 @@
             border-radius: 1rem; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: none;
         }
         .alert-missing h4 { color: #fca5a5; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        [data-theme="light"] .alert-missing h4 { color: #b91c1c; }
         .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
         .chip {
             background: rgba(239,68,68,0.15); color: #fca5a5;
             border: 1px solid rgba(239,68,68,0.25); border-radius: 0.4rem;
-            padding: 0.15rem 0.5rem; font-size: 0.72rem; font-family: monospace;
+            padding: 0.15rem 0.5rem; font-size: 0.72rem; font-family: monospace; font-weight: 600;
         }
+        [data-theme="light"] .chip { background: rgba(220,38,38,0.1); color: #b91c1c; border-color: rgba(220,38,38,0.2); }
 
         /* ─── STAT CARDS ─────────────────────────────────────────────── */
         .cards-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
@@ -186,26 +215,64 @@
         .card-icon  { position: absolute; right: 1rem; top: 1rem; font-size: 1.5rem; opacity: 0.12; }
 
         /* ─── TABLE ──────────────────────────────────────────────────── */
-        .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 1.25rem; overflow: hidden; }
+        .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 1.25rem; overflow: hidden; display: flex; flex-direction: column; max-height: 65vh; }
         .table-header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border);
         }
         .table-header h3 { font-size: 0.95rem; font-weight: 600; }
         .table-header span { font-size: 0.78rem; color: var(--dim); }
+        .table-scroll { overflow-y: auto; flex: 1; }
+        .table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        .table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        .table-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
         table { width: 100%; border-collapse: collapse; }
+        thead { position: sticky; top: 0; z-index: 10; background: var(--card); }
         thead th {
-            background: rgba(0,0,0,0.2); padding: 0.7rem 1.25rem; text-align: left;
-            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim);
+            background: var(--thead-bg); padding: 0.75rem 1.25rem; text-align: left;
+            font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--dim);
+            backdrop-filter: blur(4px);
         }
-        tbody td { padding: 0.8rem 1.25rem; border-top: 1px solid var(--border); font-size: 0.85rem; }
-        tbody tr:hover td { background: rgba(255,255,255,0.025); }
-        .mono { font-family: monospace; font-size: 0.78rem; }
-        .badge { display: inline-block; padding: 0.18rem 0.6rem; border-radius: 9999px; font-size: 0.68rem; font-weight: 600; }
+        tbody tr { transition: background 0.15s ease; }
+        tbody td { padding: 0.85rem 1.25rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text); }
+        tbody tr:hover td { background: rgba(99,102,241,0.08); }
+        .mono { font-family: monospace; font-size: 0.8rem; font-weight: 500; }
+        .badge { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; }
         .b-pend  { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
         .b-cobro { background: rgba(99,102,241,0.12);  color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
         .b-paga  { background: rgba(16,185,129,0.12);  color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
-        .empty-td { text-align: center; padding: 2.5rem; color: var(--dim); }
+        .a-dup   { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+        .a-rereg { background: rgba(34,211,238,0.12); color: #67e8f9; border: 1px solid rgba(34,211,238,0.25); }
+        .a-err   { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
+        [data-theme="light"] .b-pend, [data-theme="light"] .a-dup  { background: rgba(217,119,6,0.1); color: #b45309; border-color: rgba(217,119,6,0.2); }
+        [data-theme="light"] .b-cobro { background: rgba(79,70,229,0.1); color: #4338ca; border-color: rgba(79,70,229,0.2); }
+        [data-theme="light"] .b-paga  { background: rgba(5,150,105,0.1); color: #047857; border-color: rgba(5,150,105,0.2); }
+        [data-theme="light"] .a-rereg { background: rgba(6,182,212,0.1); color: #0e7490; border-color: rgba(6,182,212,0.2); }
+        [data-theme="light"] .a-err   { background: rgba(239,68,68,0.1); color: #b91c1c; border-color: rgba(239,68,68,0.2); }
+        .empty-td { text-align: center; padding: 2.5rem; color: var(--dim); font-weight: 500; }
+
+        /* ─── VISOR MODAL ────────────────────────────────────────────── */
+        #modalVisor {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--visor-bg); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; z-index: 9999;
+        }
+        .visor-content {
+            background: var(--card); border: 1px solid var(--border); border-radius: 1.25rem;
+            width: 90%; max-width: 1000px; height: 85vh; display: flex; flex-direction: column;
+            overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            animation: fadeUp 0.3s ease;
+        }
+        .visor-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2);
+        }
+        .visor-title { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+        .visor-actions { display: flex; gap: 0.5rem; }
+        .visor-body { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; overflow: hidden; }
+        .visor-body img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .visor-body iframe { width: 100%; height: 100%; border: none; }
 
         /* ─── CHART ──────────────────────────────────────────────────── */
         .chart-card {
@@ -223,13 +290,61 @@
         }
         .t-ok  { background: rgba(16,185,129,0.95); color: white; }
         .t-err { background: rgba(239,68,68,0.95);  color: white; }
+
+        /* ── THEME TOGGLE ── */
+        #themeToggle {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            font-size: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #themeToggle:hover {
+            transform: scale(1.12);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+        }
+
+        /* ── Light-mode: all form controls ── */
+        [data-theme="light"] input,
+        [data-theme="light"] select,
+        [data-theme="light"] textarea {
+            color: var(--text);
+            background: var(--card);
+            border-color: var(--border);
+        }
+        [data-theme="light"] input[type="date"],
+        [data-theme="light"] input[type="month"] { color-scheme: light; }
+        [data-theme="light"] option {
+            background: var(--card);
+            color: var(--text);
+        }
+        
+        /* ── Light-mode: Badges ── */
+        [data-theme="light"] .b-pend, [data-theme="light"] .a-dup { background: rgba(245,158,11,0.15); color: #b45309; border-color: rgba(245,158,11,0.3); }
+        [data-theme="light"] .b-cobro { background: rgba(79,70,229,0.12); color: #4338ca; border-color: rgba(79,70,229,0.25); }
+        [data-theme="light"] .b-paga { background: rgba(16,185,129,0.15); color: #047857; border-color: rgba(16,185,129,0.3); }
+        [data-theme="light"] .a-rereg { background: rgba(6,182,212,0.15); color: #0e7490; border-color: rgba(6,182,212,0.3); }
+        [data-theme="light"] .a-err { background: rgba(239,68,68,0.12); color: #b91c1c; border-color: rgba(239,68,68,0.25); }
+        
     </style>
 </head>
 <body>
 
 <!-- ─── SIDEBAR ─────────────────────────────────────────────────────────── -->
 <aside class="sidebar">
-    <div class="logo">FactuFlow</div>
+    <div class="logo">Soluciones Mana</div>
     <a class="nav-link active" href="dashboard.html">📊 &nbsp;Dashboard</a>
     <a class="nav-link" href="index.html">📷 &nbsp;Escáner QR</a>
     <div class="sidebar-footer">
@@ -249,9 +364,11 @@
         <button class="btn-icon" onclick="recargar()">↻ Actualizar</button>
     </div>
 
-    <!-- TABS (Simplificadas a solo Planillas para Control Documental) -->
+    <!-- TABS -->
     <div class="tabs">
         <button class="tab-btn active" id="tabPlanillas" onclick="cambiarTab('planillas')">📋 &nbsp;Gestión de Planillas</button>
+        <button class="tab-btn" id="tabBuscador" onclick="cambiarTab('buscador')">🔍 &nbsp;Buscador Empresarial</button>
+        <button class="tab-btn" id="tabAuditoria" onclick="cambiarTab('auditoria')">🛡️ &nbsp;Auditoría</button>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════
@@ -308,6 +425,7 @@
                 <h3>Últimas Facturas del Día</h3>
                 <span id="dTablaInfo"></span>
             </div>
+<div class="table-scroll">
             <table>
                 <thead><tr>
                     <th>ID Factura</th><th>Fecha</th><th>Valor</th><th>Estado</th><th>Soporte</th><th style="text-align:right">Acciones</th>
@@ -316,6 +434,7 @@
                     <tr><td colspan="6" class="empty-td">Cargando…</td></tr>
                 </tbody>
             </table>
+        </div>
         </div>
     </div><!-- /secDiario -->
 
@@ -384,6 +503,7 @@
                 <h3>Desglose por Día</h3>
                 <span id="mTablaInfo"></span>
             </div>
+<div class="table-scroll">
             <table>
                 <thead><tr>
                     <th>Día</th><th>Facturas</th><th>Recaudado</th><th>Participación</th>
@@ -393,6 +513,7 @@
                 </tbody>
             </table>
         </div>
+        </div>
 
     </div><!-- /secMensual -->
 
@@ -401,7 +522,7 @@
         <div class="header-row">
             <div class="filter-row">
                 <input type="date" id="planillaFechaFiltro" onchange="cargarPlanillas()">
-                <input type="text" id="planillaBusqueda" placeholder="Buscar Nº Planilla..." onkeyup="if(event.key==='Enter') cargarPlanillas()" style="background:var(--card); border:1px solid var(--border); border-radius:0.6rem; padding:0.5rem; color:white;">
+                <input type="text" id="planillaBusqueda" placeholder="Buscar Nº Planilla..." onkeyup="if(event.key==='Enter') cargarPlanillas()" style="background:var(--card); border:1px solid var(--border); border-radius:0.6rem; padding:0.5rem; color:var(--text);">
                 <button class="btn-sm btn-primary" onclick="cargarPlanillas()">Filtrar</button>
             </div>
             <button class="btn-sm btn-primary" onclick="abrirModalPlanilla()">+ Nueva Planilla</button>
@@ -444,10 +565,136 @@
         </div>
     </div>
 
+    <!-- ─── SECCIÓN BUSCADOR EMPRESARIAL ─────────────────────────────── -->
+    <div id="secBuscador" class="tab-content">
+        <div class="filter-row" style="flex-wrap: wrap; align-items: flex-end; gap: 1rem; background: var(--filter-bg); padding: 1.25rem; border-radius: 1rem; border: 1px solid var(--border);">
+            <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                <small style="color:var(--dim); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Nº Factura</small>
+                <input type="text" id="bId" placeholder="Buscar ID..." style="background:var(--card); border:1px solid var(--border); border-radius:0.6rem; padding:0.5rem; color:var(--text);">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                <small style="color:var(--dim); font-size:0.75rem; font-weight:600; text-transform:uppercase;">CUFE</small>
+                <input type="text" id="bCufe" placeholder="Código Único..." style="background:var(--card); border:1px solid var(--border); border-radius:0.6rem; padding:0.5rem; color:var(--text);">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                <small style="color:var(--dim); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Nº Planilla</small>
+                <input type="text" id="bPlanilla" placeholder="Ej: P-001" style="background:var(--card); border:1px solid var(--border); border-radius:0.6rem; padding:0.5rem; color:var(--text);">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                <small style="color:var(--dim); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Fecha Desde</small>
+                <input type="date" id="bFechaInicio" style="background:var(--card); border:1px solid var(--border); border-radius:0.6rem; padding:0.5rem; color:var(--text);">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                <small style="color:var(--dim); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Fecha Hasta</small>
+                <input type="date" id="bFechaFin" style="background:var(--card); border:1px solid var(--border); border-radius:0.6rem; padding:0.5rem; color:var(--text);">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.35rem;">
+                <small style="color:var(--dim); font-size:0.75rem; font-weight:600; text-transform:uppercase;">Estado</small>
+                <select id="bEstado" style="background:var(--card); border:1px solid var(--border); border-radius:0.6rem; padding:0.5rem; color:var(--text);">
+                    <option value="">Cualquier Estado</option>
+                    <option value="REGISTRADA">REGISTRADA</option>
+                    <option value="PENDIENTE">PENDIENTE</option>
+                    <option value="EN_COBRO">EN_COBRO</option>
+                    <option value="PAGADA">PAGADA</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:0.5rem; padding-bottom: 0.1rem;">
+                <button class="btn-sm btn-primary" onclick="cargarBuscador(1)">🔍 Buscar</button>
+                <button class="btn-sm btn-ghost" onclick="exportarCSVBuscador()">⬇️ Exportar CSV</button>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <div class="table-header">
+                <h3>Resultados de Búsqueda</h3>
+                <span id="bTablaInfo"></span>
+            </div>
+<div class="table-scroll">
+            <table>
+                <thead><tr>
+                    <th>ID Factura</th><th>CUFE</th><th>Fecha</th><th>Planilla</th><th>Valor</th><th>Estado</th><th>Responsable</th><th>Soporte</th>
+                </tr></thead>
+                <tbody id="bTbody">
+                    <tr><td colspan="8" class="empty-td">Realiza una búsqueda...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        </div>
+        <div id="bPagination" style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center;"></div>
+    </div><!-- /secBuscador -->
+
+    <!-- ─── SECCIÓN AUDITORIA ────────────────────────────────────────── -->
+    <div id="secAuditoria" class="tab-content">
+        <div class="header-row">
+            <h3>Registro de Eventos y Anomalías</h3>
+            <button class="btn-sm btn-primary" onclick="cargarAuditoria()">Actualizar</button>
+        </div>
+        <div class="table-wrap">
+<div class="table-scroll">
+            <table>
+                <thead><tr>
+                    <th>Fecha</th><th>Usuario</th><th>Acción</th><th>ID Factura</th><th>Planilla ID</th><th>Detalles</th>
+                </tr></thead>
+                <tbody id="aTbody">
+                    <tr><td colspan="6" class="empty-td">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        </div>
+    </div><!-- /secAuditoria -->
+
 </main>
 <div id="toast"></div>
 
+<!-- THEME TOGGLE -->
+<button id="themeToggle" title="Cambiar tema" aria-label="Cambiar entre modo claro y oscuro">🌙</button>
+
+<!-- ─── VISOR MODAL ──────────────────────────────────────────────────────── -->
+<div id="modalVisor">
+    <div class="visor-content">
+        <div class="visor-header">
+            <div class="visor-title" id="visorTitle">Documento</div>
+            <div class="visor-actions">
+                <a id="visorDownload" href="#" download class="btn-sm btn-primary" style="text-decoration:none; padding:0.4rem 1rem;">⬇️ Descargar</a>
+                <button class="btn-sm btn-ghost" onclick="cerrarVisor()" style="font-weight:bold; font-size:1.2rem; padding:0 0.5rem; line-height: 1;">&times;</button>
+            </div>
+        </div>
+        <div class="visor-body" id="visorBody"></div>
+    </div>
+</div>
+
+<!-- ─── MODAL DE SALIDA ELEGANTE ─────────────────────────────────────────── -->
+<div id="modalSalida" class="modal">
+    <div class="modal-content" style="max-width: 420px; text-align: center; padding: 2.5rem 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+        <h2 style="margin-bottom: 1rem; color: var(--text); font-weight: 700;">Tienes planillas sin cerrar</h2>
+        <p style="color: var(--dim); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.6;">Existen planillas operativas aún abiertas o incompletas.<br><br>¿Deseas salir de todas formas?</p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button class="btn-ghost" style="padding: 0.8rem 1.5rem; border-radius: 0.75rem; font-weight: 600; width: 100%;" onclick="cerrarModalSalida()">Cancelar</button>
+            <button class="btn-primary" style="padding: 0.8rem 1.5rem; border-radius: 0.75rem; font-weight: 600; width: 100%; background: var(--danger);" onclick="confirmarSalida()">Salir</button>
+        </div>
+    </div>
+</div>
+
 <script>
+// ── Validación de Salida ──────────────────────────────────────────────────────
+let hayPlanillasAbiertas = false;
+let callbackSalida = null;
+
+function mostrarModalSalida(callback) {
+    callbackSalida = callback;
+    document.getElementById('modalSalida').style.display = 'flex';
+}
+function cerrarModalSalida() {
+    document.getElementById('modalSalida').style.display = 'none';
+    callbackSalida = null;
+}
+function confirmarSalida() {
+    if (callbackSalida) {
+        hayPlanillasAbiertas = false; // Permitir salida
+        callbackSalida();
+    }
+}
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 fetch('../api/session_check.php')
     .then(r => r.json())
@@ -458,9 +705,37 @@ fetch('../api/session_check.php')
     .catch(() => window.location.href = 'login.html');
 
 async function logout() {
+    if (hayPlanillasAbiertas) {
+        mostrarModalSalida(async () => {
+            await fetch('../api/logout.php');
+            window.location.href = 'login.html';
+        });
+        return;
+    }
     await fetch('../api/logout.php');
     window.location.href = 'login.html';
 }
+
+// Interceptar links de navegación (ej: Escáner QR)
+document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (link && link.href && !link.href.includes('#') && !link.hasAttribute('download') && link.target !== '_blank') {
+        if (hayPlanillasAbiertas) {
+            e.preventDefault();
+            mostrarModalSalida(() => {
+                window.location.href = link.href;
+            });
+        }
+    }
+});
+
+// Interceptar cierre de pestaña/recarga
+window.addEventListener('beforeunload', (e) => {
+    if (hayPlanillasAbiertas) {
+        e.preventDefault();
+        e.returnValue = ''; // Muestra diálogo nativo del navegador
+    }
+});
 
 async function cambiarEstado(id, estado) {
     if (estado === 'PAGADA' && !confirm('¿Marcar factura ' + id + ' como PAGADA?')) return;
@@ -502,7 +777,7 @@ function toast(msg, tipo = 'ok') {
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
 function cambiarTab(tab) {
-    ['diario','mensual','planillas'].forEach(t => {
+    ['diario','mensual','planillas','buscador','auditoria'].forEach(t => {
         const sec = document.getElementById('sec' + t.charAt(0).toUpperCase() + t.slice(1));
         const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
         if (sec) sec.classList.toggle('active', t === tab);
@@ -510,15 +785,21 @@ function cambiarTab(tab) {
     });
     if (tab === 'mensual') cargarMensual();
     if (tab === 'planillas') cargarPlanillas();
+    if (tab === 'buscador') cargarBuscador(1);
+    if (tab === 'auditoria') cargarAuditoria();
 }
 function recargar() {
     const secD = document.getElementById('secDiario');
     const secM = document.getElementById('secMensual');
     const secP = document.getElementById('secPlanillas');
+    const secB = document.getElementById('secBuscador');
+    const secA = document.getElementById('secAuditoria');
     
     if (secD && secD.classList.contains('active')) cargarDiario();
     else if (secM && secM.classList.contains('active')) cargarMensual();
     else if (secP && secP.classList.contains('active')) cargarPlanillas();
+    else if (secB && secB.classList.contains('active')) cargarBuscador(currentPage);
+    else if (secA && secA.classList.contains('active')) cargarAuditoria();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -568,7 +849,7 @@ async function cargarDiario() {
                 }
 
                 const soporte = f.soporte_url 
-                    ? `<button class="btn-icon" onclick="window.open('../${f.soporte_url}', '_blank')" title="Ver Soporte">📄 Ver</button>` 
+                    ? `<button class="btn-icon" onclick="abrirVisor('../${f.soporte_url}')" title="Ver Soporte">📄 Ver</button>` 
                     : `<small style="color:var(--dim)">—</small>`;
 
                 return `<tr>
@@ -667,17 +948,23 @@ function dibujarGrafica(desglose, totalMes) {
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
 
+    const isLight   = document.documentElement.getAttribute('data-theme') === 'light';
+    const gridColor = isLight ? 'rgba(30,41,59,0.08)'   : 'rgba(255,255,255,0.06)';
+    const labelColor= isLight ? 'rgba(30,41,59,0.55)'   : 'rgba(148,163,184,0.7)';
+    const xlabelColor=isLight ? 'rgba(30,41,59,0.6)'    : 'rgba(148,163,184,0.8)';
+    const axisColor = isLight ? 'rgba(30,41,59,0.12)'   : 'rgba(255,255,255,0.1)';
+    const emptyBar  = isLight ? 'rgba(30,41,59,0.06)'   : 'rgba(255,255,255,0.04)';
+
     const maxVal    = Math.max(...desglose.map(d => d.recaudado), 1);
     const chartW    = minW - PAD_L - PAD_R;
     const chartH    = H   - PAD_T - PAD_B;
     const barWidth  = (chartW / desglose.length) - BAR_GAP;
 
-    // Fondo
-    ctx.fillStyle = 'rgba(15,23,42,0)';
-    ctx.fillRect(0, 0, minW, H);
+    // Fondo transparente
+    ctx.clearRect(0, 0, minW, H);
 
     // Gridlines (5 niveles)
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.strokeStyle = gridColor;
     ctx.lineWidth   = 1;
     ctx.setLineDash([4, 4]);
     for (let i = 0; i <= 4; i++) {
@@ -685,7 +972,7 @@ function dibujarGrafica(desglose, totalMes) {
         ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(PAD_L + chartW, y); ctx.stroke();
         // Y labels
         const val = maxVal - (maxVal / 4) * i;
-        ctx.fillStyle   = 'rgba(148,163,184,0.7)';
+        ctx.fillStyle   = labelColor;
         ctx.font        = `${10 * dpr / dpr}px Outfit, sans-serif`;
         ctx.textAlign   = 'right';
         ctx.fillText(val >= 1000000 ? (val/1000000).toFixed(1)+'M' : val >= 1000 ? (val/1000).toFixed(0)+'k' : val.toFixed(0), PAD_L - 6, y + 4);
@@ -703,7 +990,7 @@ function dibujarGrafica(desglose, totalMes) {
         grad.addColorStop(0, '#818cf8');
         grad.addColorStop(1, '#4f46e5');
 
-        ctx.fillStyle = d.recaudado > 0 ? grad : 'rgba(255,255,255,0.04)';
+        ctx.fillStyle = d.recaudado > 0 ? grad : emptyBar;
         const radius  = Math.min(4, barWidth / 2);
         ctx.beginPath();
         ctx.moveTo(x + radius, y);
@@ -718,7 +1005,7 @@ function dibujarGrafica(desglose, totalMes) {
 
         // X labels (cada 5 días)
         if ((d.dia === 1) || (d.dia % 5 === 0)) {
-            ctx.fillStyle = 'rgba(148,163,184,0.8)';
+            ctx.fillStyle = xlabelColor;
             ctx.font      = '10px Outfit, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(d.dia, x + barWidth / 2, H - PAD_B + 16);
@@ -726,7 +1013,7 @@ function dibujarGrafica(desglose, totalMes) {
     });
 
     // Eje X línea
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.strokeStyle = axisColor;
     ctx.lineWidth   = 1;
     ctx.beginPath();
     ctx.moveTo(PAD_L, PAD_T + chartH);
@@ -786,18 +1073,25 @@ async function cargarPlanillas() {
         const data = await res.json();
         if (!data.ok) { toast('Error: ' + data.error, 'err'); return; }
         
+        
+        // Determinar si hay planillas abiertas (cache local)
+        if (!fecha && !numero) {
+            hayPlanillasAbiertas = data.data.some(p => p.closed_at === null || parseInt(p.total_registrado) < parseInt(p.total_esperado));
+        }
+
         if (data.data.length === 0) {
             container.innerHTML = '<p class="empty-td">No se encontraron planillas.</p>';
             return;
         }
         
         container.innerHTML = data.data.map(p => {
-            const isComplete = p.total_registrado >= p.total_esperado;
+            const isComplete = parseInt(p.total_registrado) >= parseInt(p.total_esperado);
             const isClosed = p.closed_at !== null;
             const counterClass = isComplete ? 'counter-ok' : 'counter-bad';
+            const statusClass = isClosed ? 'p-closed' : (isComplete ? 'p-complete' : 'p-incomplete');
             
             return `
-                <div class="planilla-card ${isClosed ? 'p-closed' : ''}">
+                <div class="planilla-card ${statusClass}">
                     <div class="planilla-header">
                         <div>
                             <div class="planilla-num">${isClosed ? '🔒 ' : ''}${p.numero}</div>
@@ -812,7 +1106,8 @@ async function cargarPlanillas() {
                     </div>
                     <div class="planilla-actions">
                         <button class="btn-sm btn-primary" onclick="verDetallePlanilla(${p.id})">Ver Lista</button>
-                        ${p.imagen_url ? `<button class="btn-sm btn-icon" onclick="window.open('../${p.imagen_url}', '_blank')">Ver Imagen</button>` : ''}
+                        <button class="btn-sm btn-ghost" onclick="window.open('../api/exportar_csv.php?planilla_id=${p.numero}', '_blank')">⬇️ CSV</button>
+                        ${p.imagen_url ? `<button class="btn-sm btn-icon" onclick="abrirVisor('../${p.imagen_url}')">Ver Imagen</button>` : ''}
                         ${!isClosed ? `<button class="btn-sm btn-icon" onclick="irAEscanear(${p.id}, '${p.numero}', ${p.total_esperado})">📷 Escanear</button>` : ''}
                     </div>
                 </div>
@@ -849,23 +1144,29 @@ async function verDetallePlanilla(id) {
         const isComplete = p.total_registrado >= p.total_esperado;
         const isClosed = p.closed_at !== null;
         const counterClass = isComplete ? 'counter-ok' : 'counter-bad';
+        const statusClass = isClosed ? 'p-closed' : (isComplete ? 'p-complete' : 'p-incomplete');
         let msg = isComplete ? '✅ Planilla Completa' : `⚠️ Faltan ${p.diferencia} facturas`;
         if (isClosed) msg = `🔒 Planilla CERRADA (${p.closed_at})`;
 
+        // Determinar responsables
+        const responsables = [...new Set(fs.map(f => f.responsable || 'Desconocido'))].join(', ');
+
         htmlCont.innerHTML = `
-            <div class="planilla-detalle ${isClosed ? 'p-closed' : ''}">
+            <div class="planilla-detalle ${statusClass}">
                 <div style="display:flex; justify-content:space-between; align-items: flex-start; margin-bottom:2rem;">
                     <div>
                         <h2 style="font-size:2rem; color:var(--accent)">Planilla ${p.numero}</h2>
-                        <p style="color:var(--dim)">Fecha: ${p.fecha}</p>
+                        <p style="color:var(--dim)">Fecha emisión: ${p.fecha} | Creada: ${p.created_at || 'N/A'}</p>
+                        <p style="color:var(--dim)">Responsables: <span style="color:var(--text)">${responsables || 'Ninguno'}</span></p>
                         <div style="display: flex; align-items: center; gap: 1.5rem; margin-top: 1rem;">
-                            <div style="padding: 0.75rem 1rem; background: rgba(0,0,0,0.2); border-radius: 0.75rem; border: 1px solid var(--border);">
+                            <div style="padding: 0.75rem 1rem; background: var(--filter-bg); border-radius: 0.75rem; border: 1px solid var(--border);">
                                 <small style="display:block; color:var(--dim); text-transform:uppercase; font-size:0.65rem; margin-bottom:0.25rem;">Progreso de Validación</small>
                                 <span class="${counterClass}" style="font-size:1.5rem;">${p.total_registrado} / ${p.total_esperado}</span>
                                 <span style="margin-left: 1rem; font-size: 0.85rem; color: ${isClosed ? 'var(--primary)' : (isComplete ? 'var(--success)' : 'var(--danger)')}">${msg}</span>
                             </div>
                             ${(!isClosed && isComplete) ? `<button class="btn-primary" style="padding: 0.8rem 1.5rem; border-radius: 0.75rem; font-weight: 700;" onclick="cerrarPlanilla(${p.id})">🔒 Cerrar Planilla</button>` : ''}
                             ${isClosed ? '<div style="background: rgba(99,102,241,0.1); color: var(--primary); padding: 0.8rem 1.5rem; border-radius: 0.75rem; border: 1px solid var(--primary); font-weight: 700;">REGISTRO CERRADO</div>' : ''}
+                            <button class="btn-sm btn-ghost" onclick="window.open('../api/exportar_csv.php?planilla_id=${p.numero}', '_blank')">⬇️ Exportar CSV</button>
                         </div>
                     </div>
                     <div style="text-align:right">
@@ -874,10 +1175,11 @@ async function verDetallePlanilla(id) {
                     </div>
                 </div>
                 
-                ${p.imagen_url ? `<img src="../${p.imagen_url}" class="img-planilla-preview" onclick="window.open('../${p.imagen_url}', '_blank')">` : ''}
+                ${p.imagen_url ? `<img src="../${p.imagen_url}" class="img-planilla-preview" onclick="abrirVisor('../${p.imagen_url}')">` : ''}
                 
                 <div class="table-wrap">
-                    <table>
+        <div class="table-scroll">
+            <table>
                         <thead>
                             <tr>
                                 <th>ID Factura</th><th>Valor</th><th>Soporte</th><th>Novedad</th><th>Fecha Registro</th>
@@ -889,7 +1191,7 @@ async function verDetallePlanilla(id) {
                                     <td class="mono">${f.id}</td>
                                     <td style="font-weight:600">${cop(f.valor)}</td>
                                     <td>
-                                        ${f.soporte_url ? `<button class="btn-icon" onclick="window.open('../${f.soporte_url}', '_blank')">📄 Ver</button>` : '<small style="color:var(--dim)">—</small>'}
+                                        ${f.soporte_url ? `<button class="btn-icon" onclick="abrirVisor('../${f.soporte_url}')">📄 Ver</button>` : '<small style="color:var(--dim)">—</small>'}
                                     </td>
                                     <td style="font-size:0.8rem; color:var(--dim)">${f.novedad || '—'}</td>
                                     <td style="font-size:0.8rem; color:var(--dim)">${f.created_at || '—'}</td>
@@ -898,6 +1200,7 @@ async function verDetallePlanilla(id) {
                             ${fs.length === 0 ? '<tr><td colspan="4" class="empty-td">Sin facturas registradas</td></tr>' : ''}
                         </tbody>
                     </table>
+        </div>
                 </div>
             </div>
         `;
@@ -926,6 +1229,16 @@ async function cerrarPlanilla(id) {
         
         if (data.ok) {
             toast('Planilla cerrada correctamente');
+            
+            // Re-verificar estado global de planillas abiertas
+            fetch('../api/get_planillas.php')
+                .then(r => r.json())
+                .then(d => {
+                    if (d.ok) {
+                        hayPlanillasAbiertas = d.data.some(p => p.closed_at === null || parseInt(p.total_registrado) < parseInt(p.total_esperado));
+                    }
+                }).catch(console.error);
+
             verDetallePlanilla(id); // Recargar detalle
             cargarPlanillas(); // Recargar lista
         } else {
@@ -941,11 +1254,187 @@ function cerrarDetallePlanilla() {
     document.getElementById('detallePlanillaCont').style.display = 'none';
 }
 
+// ── Buscador y Auditoria ──────────────────────────────────────────────────
+let currentPage = 1;
+
+async function cargarBuscador(page = 1) {
+    currentPage = page;
+    const id = document.getElementById('bId').value;
+    const cufe = document.getElementById('bCufe').value;
+    const planilla = document.getElementById('bPlanilla').value;
+    const finicio = document.getElementById('bFechaInicio').value;
+    const ffin = document.getElementById('bFechaFin').value;
+    const estado = document.getElementById('bEstado').value;
+
+    const tbody = document.getElementById('bTbody');
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-td">Buscando...</td></tr>';
+
+    try {
+        const res = await fetch(`../api/buscar_facturas.php?page=${page}&id=${id}&cufe=${cufe}&planilla_id=${planilla}&fecha_inicio=${finicio}&fecha_fin=${ffin}&estado=${estado}`);
+        const result = await res.json();
+
+        if (result.ok) {
+            document.getElementById('bTablaInfo').textContent = `Total: ${result.total} registros`;
+            
+            if (result.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-td">No se encontraron facturas.</td></tr>';
+            } else {
+                tbody.innerHTML = result.data.map(f => {
+                    const soporte = f.soporte_url 
+                        ? `<button class="btn-icon" onclick="abrirVisor('../${f.soporte_url}')" title="Ver Soporte">📄 Ver</button>` 
+                        : `<small style="color:var(--dim)">—</small>`;
+                    return `
+                    <tr>
+                        <td class="mono">${f.id}</td>
+                        <td class="mono" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${f.cufe || ''}">${f.cufe || '—'}</td>
+                        <td>${f.fecha || '—'}</td>
+                        <td>${f.planilla_numero || '—'}</td>
+                        <td style="font-weight:600">${cop(f.valor)}</td>
+                        <td>${f.estado}</td>
+                        <td>${f.responsable || '—'}</td>
+                        <td>${soporte}</td>
+                    </tr>
+                `}).join('');
+            }
+
+            // Pagination
+            let pHTML = '';
+            for (let i = 1; i <= result.pages; i++) {
+                if (i === 1 || i === result.pages || (i >= page - 2 && i <= page + 2)) {
+                    pHTML += `<button class="${i === page ? 'btn-primary' : 'btn-ghost'} btn-sm" onclick="cargarBuscador(${i})">${i}</button>`;
+                } else if (i === page - 3 || i === page + 3) {
+                    pHTML += `<span style="color:var(--dim)">...</span>`;
+                }
+            }
+            document.getElementById('bPagination').innerHTML = pHTML;
+
+        } else {
+            toast('Error: ' + result.error, 'err');
+        }
+    } catch (e) {
+        toast('Error de conexión', 'err');
+    }
+}
+
+function exportarCSVBuscador() {
+    const finicio = document.getElementById('bFechaInicio').value;
+    const ffin = document.getElementById('bFechaFin').value;
+    const url = `../api/exportar_csv.php?fecha_inicio=${finicio}&fecha_fin=${ffin}`;
+    window.open(url, '_blank');
+}
+
+function parsearDetallesAuditoria(accion, detallesStr) {
+    let det = '';
+    try {
+        if (detallesStr) {
+            const j = JSON.parse(detallesStr);
+            if (j.en_planilla) det = ` (Planilla origen: ${j.en_planilla})`;
+            if (j.info) det = ` (${j.info})`;
+        }
+    } catch(e) { 
+        if (detallesStr) det = ` (${detallesStr})`; 
+    }
+
+    if (accion === 'INTENTO_DUPLICADO') return `<span style="color:var(--text)">Factura ya registrada</span> <span style="color:var(--dim)">${det}</span>`;
+    if (accion === 'RE-REGISTRO_FACTURA') return `<span style="color:var(--text)">Movida manualmente</span> <span style="color:var(--dim)">${det}</span>`;
+    if (accion === 'ERROR_SISTEMA') return `<span style="color:var(--text)">Error operativo</span> <span style="color:var(--dim)">${det}</span>`;
+    return accion + det;
+}
+
+function badgeAuditoria(accion) {
+    if (accion === 'INTENTO_DUPLICADO') return '<span class="badge a-dup">⚠️ Duplicado</span>';
+    if (accion === 'RE-REGISTRO_FACTURA') return '<span class="badge a-rereg">🔄 Re-registro</span>';
+    if (accion === 'ERROR_SISTEMA') return '<span class="badge a-err">❌ Error</span>';
+    return `<span class="badge b-pend">${accion}</span>`;
+}
+
+async function cargarAuditoria() {
+    const tbody = document.getElementById('aTbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-td">Cargando auditoría...</td></tr>';
+    
+    try {
+        const res = await fetch('../api/get_auditoria.php');
+        const data = await res.json();
+        
+        if (data.ok) {
+            if (data.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-td">No hay eventos recientes.</td></tr>';
+            } else {
+                tbody.innerHTML = data.data.map(l => `
+                    <tr>
+                        <td style="font-size: 0.8rem; color:var(--dim);">${l.fecha}</td>
+                        <td style="font-weight:600;">${l.usuario}</td>
+                        <td>${badgeAuditoria(l.accion)}</td>
+                        <td class="mono">${l.factura_id || '—'}</td>
+                        <td class="mono">${l.planilla_id || '—'}</td>
+                        <td style="font-size: 0.85rem;">${parsearDetallesAuditoria(l.accion, l.detalles)}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+    } catch (e) {
+        toast('Error de conexión en auditoría', 'err');
+    }
+}
+
+// ── Visor y Utilitarios ───────────────────────────────────────────────────
+function abrirVisor(url) {
+    console.log('[VISOR]', url);
+    const ext = url.split('.').pop().toLowerCase();
+    const title = url.split('/').pop();
+    document.getElementById('visorTitle').textContent = title;
+    document.getElementById('visorDownload').href = url;
+    
+    const body = document.getElementById('visorBody');
+    if (ext === 'pdf') {
+        body.innerHTML = `<iframe src="${url}"></iframe>`;
+    } else {
+        body.innerHTML = `<img src="${url}" alt="Soporte">`;
+    }
+    document.getElementById('modalVisor').style.display = 'flex';
+}
+function cerrarVisor() {
+    document.getElementById('modalVisor').style.display = 'none';
+    document.getElementById('visorBody').innerHTML = ''; // Limpiar para detener descarga o iframe
+}
+
+// Eventos del Visor (Cerrar con ESC o clic afuera)
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('modalVisor').style.display === 'flex') {
+        cerrarVisor();
+    }
+});
+document.getElementById('modalVisor').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modalVisor')) {
+        cerrarVisor();
+    }
+});
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 cargarPlanillas();
 setInterval(() => {
     if (document.getElementById('tabPlanillas').classList.contains('active')) cargarPlanillas();
 }, 60000);
+
+// ── Theme Toggle ──────────────────────────────────────────────────────────────
+(function initTheme() {
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('themeToggle').textContent = saved === 'dark' ? '🌙' : '☀️';
+})();
+
+document.getElementById('themeToggle').addEventListener('click', function() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    this.textContent = next === 'dark' ? '🌙' : '☀️';
+    // Redraw chart if mensual tab is active
+    const mes = document.getElementById('mesFiltro').value;
+    if (document.getElementById('secMensual').classList.contains('active') && mes) {
+        cargarMensual();
+    }
+});
 </script>
 </body>
 </html>

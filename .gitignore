@@ -8,3 +8,7 @@ database_clean.sql
 .DS_Store
 node_modules/
 .env
+vendor/
+api/credenciales.json
+scratch/
+.vscode/

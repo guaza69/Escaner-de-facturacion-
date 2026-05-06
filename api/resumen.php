@@ -53,11 +53,11 @@ if ($total_facturas == 0) {
     exit;
 }
 
-// ── Recaudo del día (optimizado con rango) ───────────────────────────────────
+// ── Recaudo del día (optimizado con rango real de registro) ──────────────────
 $fecha_inicio = $fecha . ' 00:00:00';
-$fecha_fin    = $fecha . ' 23:59:59';
+$fecha_fin    = date('Y-m-d', strtotime($fecha . ' +1 day')) . ' 00:00:00';
 $s_dia = $conn->prepare(
-    "SELECT COUNT(*), COALESCE(SUM(valor), 0) FROM facturas WHERE fecha BETWEEN ? AND ?"
+    "SELECT COUNT(*), COALESCE(SUM(valor), 0) FROM facturas WHERE created_at >= ? AND created_at < ?"
 );
 $s_dia->bind_param("ss", $fecha_inicio, $fecha_fin);
 $s_dia->execute();
@@ -102,11 +102,11 @@ for ($i = 1; $i < count($nums); $i++) {
     }
 }
 
-// ── Últimas 10 facturas con responsable (optimizado con rango) ───────────────
+// ── Últimas 10 facturas con responsable (optimizado con rango real) ──────────
 $s3 = $conn->prepare(
     "SELECT id, DATE_FORMAT(fecha,'%Y-%m-%d') as fecha, valor, estado,
             COALESCE(responsable,'—') as responsable
-     FROM facturas WHERE fecha BETWEEN ? AND ?
+     FROM facturas WHERE created_at >= ? AND created_at < ?
      ORDER BY created_at DESC LIMIT 10"
 );
 $s3->bind_param("ss", $fecha_inicio, $fecha_fin);

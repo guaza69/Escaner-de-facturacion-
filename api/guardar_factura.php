@@ -14,10 +14,19 @@ $valor       = $data['valor'] ?? null;
 $responsable = $_SESSION['usuario'] ?? 'escaner';
 $planilla_id = $data['planilla_id'] ?? null;
 $novedad     = $data['novedad']     ?? null;
+$force       = $data['force']       ?? false; // Nueva bandera para decisión operativa
 
 if (!$id || !$valor || !$planilla_id) {
     sendResponse(false, ["error" => "DATOS_INCOMPLETOS", "msg" => "Falta ID, Valor o Planilla Activa"]);
 }
+
+// Limpiar valor de posibles caracteres no numéricos
+$valor = preg_replace('/[^0-9.]/', '', $valor);
+if (!is_numeric($valor)) {
+    sendResponse(false, ["error" => "VALOR_INVALIDO", "msg" => "El valor de la factura no es válido"]);
+}
+$valor = (float)$valor;
+
 
 try {
     // 1. Verificar si la planilla ya está cerrada
@@ -35,12 +44,29 @@ try {
     }
     $check->close();
 
-    // 2. Intentar insertar la factura
+    // 2. Lógica de Inserción o Actualización (Decisión Operativa)
+    if ($force) {
+        // Mover factura a la nueva planilla o actualizar datos
+        $stmt = $conn->prepare(
+            "UPDATE facturas 
+             SET planilla_id = ?, novedad = ?, responsable = ?, valor = ?, fecha = ?, estado = 'REGISTRADA' 
+             WHERE id = ?"
+        );
+        $stmt->bind_param("issdss", $planilla_id, $novedad, $responsable, $valor, $fecha, $id);
+        
+        if ($stmt->execute()) {
+            logAction($conn, "RE-REGISTRO_FACTURA", $id, $planilla_id, ["info" => "Forzado por usuario"]);
+            sendResponse(true, ["msg" => "Factura re-asignada exitosamente"]);
+            exit;
+        }
+    }
+
+    // Intento normal
     $stmt = $conn->prepare(
         "INSERT INTO facturas (id, cufe, fecha, valor, estado, responsable, planilla_id, novedad)
          VALUES (?, ?, ?, ?, 'REGISTRADA', ?, ?, ?)"
     );
-    $stmt->bind_param("sssdssis", $id, $cufe, $fecha, $valor, $responsable, $planilla_id, $novedad);
+    $stmt->bind_param("sssdsis", $id, $cufe, $fecha, $valor, $responsable, $planilla_id, $novedad);
 
     if ($stmt->execute()) {
         logAction($conn, "REGISTRO_FACTURA", $id, $planilla_id);
@@ -65,7 +91,7 @@ try {
             throw new Exception($conn->error);
         }
     }
-} catch (Exception $e) {
+} catch (Throwable $e) {
     logAction($conn, "ERROR_SISTEMA", $id, $planilla_id, $e->getMessage());
     sendResponse(false, "Error interno del servidor: " . $e->getMessage());
 } finally {

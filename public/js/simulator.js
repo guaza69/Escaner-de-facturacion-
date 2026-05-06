@@ -1,5 +1,5 @@
 /**
- * Simulador de Escaneo QR para FactuFlow
+ * Simulador de Escaneo QR para Soluciones Mana
  */
 
 // ─── Función auxiliar: crear panel de logs en pantalla ──────────

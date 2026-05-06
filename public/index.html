@@ -1,22 +1,49 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FactuFlow — Escáner de Facturas</title>
+    <title>Soluciones Mana — Escáner de Facturas</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg:      #0f172a;
-            --card:    #1e293b;
-            --border:  rgba(255,255,255,0.08);
-            --text:    #f8fafc;
-            --dim:     #94a3b8;
-            --primary: #6366f1;
-            --accent:  #22d3ee;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger:  #ef4444;
+            --bg:          #0f172a;
+            --card:        #1e293b;
+            --border:      rgba(255,255,255,0.08);
+            --text:        #f8fafc;
+            --dim:         #94a3b8;
+            --primary:     #6366f1;
+            --accent:      #22d3ee;
+            --success:     #10b981;
+            --warning:     #f59e0b;
+            --danger:      #ef4444;
+            --topbar-bg:   rgba(13,21,38,0.85);
+            --input-bg:    rgba(0,0,0,0.3);
+            --body-grad-1: rgba(99,102,241,0.12);
+            --body-grad-2: rgba(34,211,238,0.08);
+            --scanner-bg:  rgba(0,0,0,0.3);
+            --novedad-bg:  rgba(0,0,0,0.2);
+            --upload-bg:   rgba(99,102,241,0.05);
+        }
+
+        [data-theme="light"] {
+            --bg:          #eef2f7;
+            --card:        #ffffff;
+            --border:      rgba(0,0,0,0.08);
+            --text:        #1e293b;
+            --dim:         #64748b;
+            --primary:     #4f46e5;
+            --accent:      #0891b2;
+            --success:     #059669;
+            --warning:     #d97706;
+            --danger:      #dc2626;
+            --topbar-bg:   rgba(236,241,248,0.92);
+            --input-bg:    rgba(0,0,0,0.04);
+            --body-grad-1: rgba(99,102,241,0.06);
+            --body-grad-2: rgba(34,211,238,0.04);
+            --scanner-bg:  rgba(0,0,0,0.04);
+            --novedad-bg:  rgba(0,0,0,0.04);
+            --upload-bg:   rgba(99,102,241,0.03);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
@@ -28,8 +55,8 @@
             display: flex;
             flex-direction: column;
             background-image:
-                radial-gradient(ellipse at 15% 40%, rgba(99,102,241,0.12) 0%, transparent 55%),
-                radial-gradient(ellipse at 85% 15%, rgba(34,211,238,0.08) 0%, transparent 50%);
+                radial-gradient(ellipse at 15% 40%, var(--body-grad-1) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 15%, var(--body-grad-2) 0%, transparent 50%);
         }
 
         /* ── TOPBAR ── */
@@ -39,7 +66,7 @@
             justify-content: space-between;
             padding: 1rem 2rem;
             border-bottom: 1px solid var(--border);
-            background: rgba(13,21,38,0.8);
+            background: var(--topbar-bg);
             backdrop-filter: blur(8px);
             position: sticky;
             top: 0;
@@ -132,7 +159,7 @@
         }
         #scanner {
             width: 100%;
-            background: rgba(0,0,0,0.3);
+            background: var(--scanner-bg);
             border: 2px solid var(--border);
             border-radius: 0.875rem;
             padding: 1rem 1rem 1rem 3rem;
@@ -220,13 +247,53 @@
             .stats-row { flex-direction: column; }
             .last-scan-grid { grid-template-columns: 1fr 1fr; }
         }
+
+        /* ── THEME TOGGLE ── */
+        #themeToggle {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            font-size: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #themeToggle:hover {
+            transform: scale(1.12);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+        }
+
+        /* ── Light-mode: all form controls ── */
+        [data-theme="light"] input,
+        [data-theme="light"] select,
+        [data-theme="light"] textarea {
+            color: var(--text);
+            background: var(--scanner-bg);
+            border-color: var(--border);
+        }
+        [data-theme="light"] input[type="date"],
+        [data-theme="light"] input[type="month"] { color-scheme: light; }
+        [data-theme="light"] option {
+            background: var(--card);
+            color: var(--text);
+        }
     </style>
 </head>
 <body>
 
     <!-- TOPBAR -->
     <header class="topbar">
-        <div class="topbar-logo">FactuFlow</div>
+        <div class="topbar-logo">Soluciones Mana</div>
         <div class="topbar-right">
             <span class="topbar-user">Hola, <span id="nombreUser">—</span></span>
             <a class="btn-nav" href="dashboard.html">📊 Dashboard</a>
@@ -268,7 +335,7 @@
             </div>
             
             <div class="form-group" style="margin-bottom: 1rem;">
-                <input type="text" id="novedadInput" placeholder="Novedad (ej: Pago parcial, revisar...)" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 0.75rem; padding: 0.5rem; color: var(--text); outline: none; font-size: 0.85rem;">
+                <input type="text" id="novedadInput" placeholder="Novedad (ej: Pago parcial, revisar...)" style="width: 100%; background: var(--novedad-bg); border: 1px solid var(--border); border-radius: 0.75rem; padding: 0.5rem; color: var(--text); outline: none; font-size: 0.85rem;">
             </div>
 
             <div class="input-wrap">
@@ -315,7 +382,7 @@
             </div>
             
             <!-- SECCIÓN CARGA DE SOPORTE -->
-            <div id="uploadSection" style="display:none; margin-top: 1.25rem; padding: 1rem; background: rgba(99,102,241,0.05); border: 1px dashed rgba(99,102,241,0.3); border-radius: 1rem; text-align: center;">
+            <div id="uploadSection" style="display:none; margin-top: 1.25rem; padding: 1rem; background: var(--upload-bg); border: 1px dashed rgba(99,102,241,0.3); border-radius: 1rem; text-align: center;">
                 <p style="font-size: 0.75rem; margin-bottom: 0.6rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.05em;">Evidencia Digital (Opcional)</p>
                 <label class="btn-nav" style="cursor: pointer; display: inline-block; font-size: 0.75rem;">
                     📷 Subir Imagen o PDF
@@ -327,7 +394,10 @@
 
     </div>
 
-    <footer>FactuFlow &nbsp;·&nbsp; Sistema de Control de Facturación</footer>
+    <footer>Soluciones Mana &nbsp;·&nbsp; Sistema de Control de Facturación</footer>
+
+    <!-- THEME TOGGLE -->
+    <button id="themeToggle" title="Cambiar tema" aria-label="Cambiar entre modo claro y oscuro">🌙</button>
 
     <!-- SCRIPTS -->
     <script src="js/parser.js"></script>
@@ -435,21 +505,79 @@
             }
         }
 
+        // ── Audio Feedback (Web Audio API) ───────────────────────────────────
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioCtx();
+
+        function playSound(type) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'success') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+                osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.1); // E6
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'error' || type === 'dup') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.2); // A2
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
         // ── Mostrar feedback ──────────────────────────────────────────────────
-        function mostrarFeedback(tipo, titulo, sub) {
+        function mostrarFeedback(tipo, titulo, sub, showForce = false) {
             // tipos: ok | dup | error
             input.className = tipo;
             feedbackEl.className = `feedback ${tipo}`;
             const icons = { ok: '✅', dup: '⚠️', error: '❌' };
             feedbackIcon.textContent  = icons[tipo] || 'ℹ️';
             feedbackTitle.textContent = titulo;
-            feedbackSub.textContent   = sub;
+            
+            // Si es duplicado y queremos mostrar opción de forzar
+            if (showForce) {
+                feedbackSub.innerHTML = `${sub} <br><button onclick="forzarRegistro()" style="margin-top:0.5rem; background:var(--warning); color:black; border:none; padding:4px 8px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:10px;">RE-REGISTRAR FORZADO</button>`;
+            } else {
+                feedbackSub.textContent = sub;
+            }
+
+            feedbackEl.style.display = 'flex';
+            playSound(tipo === 'ok' ? 'success' : 'error');
 
             clearTimeout(feedbackTimer);
             feedbackTimer = setTimeout(() => {
                 input.className = '';
                 feedbackEl.style.display = 'none';
-            }, 4000);
+            }, 6000);
+        }
+
+        let pendingFactura = null;
+        async function forzarRegistro() {
+            if (!pendingFactura) return;
+            try {
+                const res = await fetch('../api/guardar_factura.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...pendingFactura, planilla_id: activePlanillaId, force: true })
+                });
+                const result = await res.json();
+                if (result.ok) {
+                    mostrarFeedback('ok', 'Re-asignada con éxito', `Factura ${pendingFactura.id} movida.`);
+                    cargarStats();
+                } else {
+                    mostrarFeedback('error', 'Error al forzar', result.error || 'No se pudo mover');
+                }
+            } catch (e) { console.error(e); }
+            pendingFactura = null;
         }
 
         // ── Actualizar última factura ─────────────────────────────────────────
@@ -552,9 +680,9 @@
                     document.getElementById('novedadInput').value = ''; 
 
                 } else if (result.error === 'DUPLICADO') {
-                    const msg = result.mensaje || `El ID ${factura.id} ya existe en el sistema`;
-                    mostrarFeedback('dup', `⚠️ DUPLICADO`, msg);
-                    alert(`¡ALERTA DE DUPLICADO!\n${msg}`);
+                    const msg = result.mensaje || `El ID ${factura.id} ya existe`;
+                    pendingFactura = factura;
+                    mostrarFeedback('dup', `⚠️ DUPLICADO`, msg, true);
 
                 } else if (result.error === 'PLANILLA_CERRADA') {
                     mostrarFeedback('error', 'Planilla Cerrada', 'No se pueden agregar más facturas a esta planilla');
@@ -573,17 +701,65 @@
             input.focus();
         });
 
-        // Mantener foco en el input siempre
-        document.addEventListener('click', () => input.focus());
-        document.addEventListener('keydown', (e) => {
-            if (document.activeElement !== input && e.key !== 'Tab') input.focus();
+        // ── Foco inteligente ──────────────────────────────────────────────
+        /**
+         * Devuelve true SOLO si el escáner puede recuperar el foco de forma segura.
+         * Respeta: inputs, textarea, select, y modales abiertos.
+         */
+        function puedeRecuperarFoco() {
+            const activo = document.activeElement;
+            if (!activo) return true;
+
+            // El usuario está escribiendo en otro campo
+            const tag = activo.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return false;
+
+            // El usuario está dentro de un modal abierto
+            const modalAbierto = document.querySelector('.modal[style*="flex"], #modalVisor[style*="flex"]');
+            if (modalAbierto && modalAbierto.contains(activo)) return false;
+
+            return true;
+        }
+
+        // Recuperar foco al hacer clic SOLO si no hay interacción manual activa
+        document.addEventListener('click', (e) => {
+            // Ignorar clics dentro del input de novedad o cualquier campo de texto
+            if (!puedeRecuperarFoco()) return;
+            // Pequeño delay para que el browser procese el clic primero
+            setTimeout(() => {
+                if (puedeRecuperarFoco()) input.focus();
+            }, 50);
         });
 
-        // ── Inicialización ────────────────────────────────────────────────────
+        // Recuperar foco en keydown SOLO si el usuario no está en otro campo
+        document.addEventListener('keydown', (e) => {
+            if (document.activeElement === input) return; // ya está ahí
+            if (!puedeRecuperarFoco()) return;            // respeta inputs manuales
+            if (e.key === 'Tab') return;                  // permite Tab navegar
+            if (e.key.length === 1 || e.key === 'Enter') input.focus();
+        });
+
+        // ── Inicialización ────────────────────────────────────────────────
         actualizarPlanillaUI();
         cargarStats();
         setInterval(cargarStats, 30000); // Refresh stats cada 30s
         input.focus();
+
+        // ── Theme Toggle ──────────────────────────────────────────────────
+        (function initTheme() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('themeToggle').textContent = saved === 'dark' ? '🌙' : '☀️';
+        })();
+
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            this.textContent = next === 'dark' ? '🌙' : '☀️';
+        });
     </script>
+
 </body>
 </html>
